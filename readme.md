@@ -23,8 +23,8 @@ Modules
 
 Workflow
 ===
-- [ ] HTTP Receiver
-- [ ] HTTP Sender
+- [X] HTTP Receiver
+- [X] HTTP Sender
 - [ ] Information Modules demo
 - [ ] load Module from Daemon Program
 - [ ] More Modules
