@@ -1,2 +1,2 @@
-server: server.cc
-	g++ server.cc -o server
+bin/server: server.cc
+	g++ server.cc -o bin/server
