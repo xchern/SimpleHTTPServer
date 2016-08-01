@@ -6,10 +6,12 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 #include <new>
 
 #include "module.h"
+#include "console.h"
 
 int socketFD;
 
@@ -97,12 +99,11 @@ void connectionHandler(int connectFD) {
 			}
 			path[i] = '\0';
 			const char * params = path + i;
-			if (modExistP(path)) {
-				fprintf(stderr, "serving with %s...", path);
+			fprintf(stderr, "try serving with %s...", path);
+			if (const char * response_body = mod_serve(path, params)) {
 				// send head
 				send(connectFD, response_200_head, sizeof(response_200_head), 0);
 				// get body
-				const char * response_body = modServe(path, params);
 				// send body
 				int count = strlen(response_body);
 #define MAXSIZE 8192
@@ -138,6 +139,13 @@ void connectionHandler(int connectFD) {
 	fprintf(stderr, "finished.\n\n");
 }
 
+void * connectionAccepter(void *) {
+	for(;;) {
+		int connectFD = accept(socketFD, NULL, NULL);
+		connectionHandler(connectFD);
+	}
+	return NULL;
+}
 
 int main(int argc, char ** argv) {
 	int http_port = 8080;
@@ -184,16 +192,11 @@ int main(int argc, char ** argv) {
 	}
 	fprintf(stderr, "Start Listening\n\n");
 
-
-	doLoad("modules/demo.so");
-
 	// accept and handle connections
-	for(;;) {
-		int connectFD = accept(socketFD, NULL, NULL);
-		connectionHandler(connectFD);
-	}
+	pthread_t thread;
+	if (pthread_create(&thread, NULL, connectionAccepter, NULL)) { fprintf(stderr, "fail create thread."); }
 
-	doUnload("demo");
+	console();
 
 	close(socketFD);
 	return 0;

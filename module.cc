@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <dlfcn.h>
+#include <pthread.h>
+
 #include <string>
 #include <map>
+
+#include "module.h"
 
 struct ModItem {
 	void * dlp;
@@ -10,24 +14,29 @@ struct ModItem {
 	const char * (*serve)(const char *);
 };
 
+pthread_rwlock_t list_rw_lock = PTHREAD_RWLOCK_INITIALIZER;
 static std::map <std::string, struct ModItem> modules;
 
-inline bool modExistP(const char * name) {
+void mod_status(void){}; //TODO
+
+void mod_candidates(void){}; //TODO
+
+const char * mod_serve(const char * name, const char * param) {
 	std::string modname(name);
-	return (modules.count(modname) > 0);
+	const char * result = NULL;
+	int rl = pthread_rwlock_rdlock(&list_rw_lock);
+	if (modules.count(modname) > 0)
+		result = (modules[modname].serve(param));
+	pthread_rwlock_unlock(&list_rw_lock);
+	return result;
 }
 
-const char * modServe(const char * name, const char * param) {
-	std::string modname(name);
-	return (modules[modname].serve(param));
-}
-
-void doUnload(const char * name) {
+void mod_doUnload(const char * name) {
 	puts("[unload]");
 	printf("try to unload module \'%s\'\n", name);
 	std::string modname(name);
 	// check if module exists
-	if (!modExistP(name)) {
+	if (!modules.count(modname) > 0) {
 		printf("no module named \'%s\'\n", name);
 		return;
 	}
@@ -55,12 +64,12 @@ void doUnload(const char * name) {
 	}
 }
 
-void doLoad(const char * path) {
+void mod_doLoad(const char * path) {
 	puts("[load]");
 	struct ModItem newmod;
 	std::string modname;
 	char * errormsg;
-	printf("try to load from file %s...", path);
+	printf("try to open library from file %s...", path);
 	// try load shared lib
 	newmod.dlp = dlopen(path, RTLD_LAZY);
 	if (newmod.dlp) {
@@ -68,12 +77,11 @@ void doLoad(const char * path) {
 		// try get module information
 		puts("try to getmodule information.");
 		const char * (* getName)(void) = (const char * (*)()) dlsym(newmod.dlp, "getName");
-		const char * name;
 		if (!getName) goto bad_mod;
-		name = getName();
-		printf("module name: %s\n", name);
+		modname = getName();
+		printf("module name: %s\n", modname.c_str());
 
-		if (modExistP(name)) { // abort if name exists
+		if (modules.count(modname) > 0) { // abort if name exists
 			puts("module with same name having been loaded");
 			goto close_lib;
 		}
@@ -93,7 +101,6 @@ void doLoad(const char * path) {
 
 		// register module
 		printf("registering module...");
-		modname = name;
 		modules[modname] = newmod;
 		puts("done.");
 
@@ -105,7 +112,7 @@ bad_mod:
 			puts(errormsg);
 close_lib:
 		if (dlclose(newmod.dlp)) {
-			puts("fail unload shared library.");
+			puts("fail closing shared library.");
 			errormsg = dlerror();
 			if (errormsg)
 				puts(errormsg);

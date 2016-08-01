@@ -1,8 +1,13 @@
-bin/server: server.o module.o
-	g++ server.o module.o -ldl -o bin/server
+CPP=g++
+CPPFLAGS=-pthread -ldl -g
+HEADS=module.h console.h
+OBJECTS=server.o module.o console.o
 
-server.o: server.cc
-	g++ server.cc -c -o server.o
+bin/server: ${OBJECTS}
+	g++ ${CPPFLAGS} ${OBJECTS} -o $@
 
-module.o: module.cc
-	g++ module.cc -c -o module.o
+%.o: %.cc
+	g++ ${CPPFLAGS} -c $< -o $@
+
+clean:
+	rm -f ${OBJECTS} || true
