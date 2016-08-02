@@ -5,28 +5,26 @@ Course Requirements
 	- uname: linux uname
 	- df: free disk space
 	- ps: processes running
-- realtime generate webpage when requested
-- modules compiles as dynamic shared library, and allows load dump at runtime
-- design process/thread pool to handle http request
+- realtime webpage when requested
+- modules compiled as dynamic shared library, and allows load dump at runtime
+- process/thread pool to handle http request
 - run under non-root
-- use OOP
+- OOP
 
 Modules
 ===
-- Daemon Program
-	- HTTP Receiver
-	- HTTP Sender
+- Main Program
+	- HTTP Receiver/Sender
+	- Module
+	- Console
 	- Thread Pool
-	- Arranger
 - Information Gathering Modules
-- Manipulate Program
 
 Workflow
 ===
-- [X] HTTP Receiver
-- [X] HTTP Sender
-- [ ] Information Modules demo
+- [X] HTTP Receiver/Sender
 - [X] load Module
-- [ ] More Modules
+- [X] Manipulate Program
+- [ ] Modules info
 - [ ] Thread Pool and Arranger
-- [X] Manipultate Program
+- [ ] More Modules
