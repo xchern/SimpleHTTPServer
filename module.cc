@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <pthread.h>
+#include <dirent.h>
+#include <string.h>
 
 #include <string>
 #include <map>
@@ -17,9 +19,37 @@ struct ModItem {
 pthread_rwlock_t list_rw_lock = PTHREAD_RWLOCK_INITIALIZER;
 static std::map <std::string, struct ModItem> modules;
 
-void mod_status(void){}; //TODO
+char mod_list[4096];
 
-void mod_candidates(void){}; //TODO
+void mod_list_update(void) {
+	mod_list[0] = '\0';
+	std::map<std::string, struct ModItem>::iterator it = modules.begin();
+	for (; it != modules.end(); ++it) {
+		strcat(mod_list, it->first.c_str());
+		strcat(mod_list, "\n");
+	}
+}
+
+void mod_status(void){
+	puts("All running modules:");
+	puts(mod_list);
+}
+
+void mod_candidates(const char * path){
+	DIR * dir;
+	struct dirent *ent;
+	if ((dir = opendir(path)) != NULL) {
+		puts("module candidates:");
+		while ((ent = readdir(dir)) != NULL) {
+			if (ent->d_name[0] != '.')
+				printf("%s\t", ent->d_name);
+		}
+		putchar('\n');
+		closedir(dir);
+	} else {
+		puts("fail open module directory!");
+	}
+}
 
 const char * mod_serve(const char * name, const char * param) {
 	std::string modname(name);
@@ -45,6 +75,7 @@ void mod_doUnload(const char * name) {
 	printf("unregistering module...");
 	struct ModItem mod = modules[modname];
 	modules.erase(modname);
+	mod_list_update();
 	puts("done.");
 
 	// unload module
@@ -61,6 +92,7 @@ void mod_doUnload(const char * name) {
 			puts(errormsg);
 	} else {
 		puts("done.");
+		puts("SUCCESS!");
 	}
 }
 
@@ -102,8 +134,10 @@ void mod_doLoad(const char * path) {
 		// register module
 		printf("registering module...");
 		modules[modname] = newmod;
+		mod_list_update();
 		puts("done.");
 
+		puts("SUCCESS!");
 		return;
 bad_mod:
 		puts("BAD module.");

@@ -42,8 +42,23 @@ Content-Type: text/html; charset=utf-8\r\n\
 Bad Request.\n\
 ";
 
+static const char root_response_head[] = "This server works!!!\n\
+Following modules avaliable:\n\
+";
 
-static char root_response[] = "This server works";
+static const char _404_response_head[] = "404 not found!\n\
+Try following avaliable modules:\n\
+";
+
+void sendstr(int connectFD, const char * response_body) {
+	int count = strlen(response_body);
+#define MAXSIZE 8192
+	while (count > MAXSIZE) {
+		send(connectFD, response_body, MAXSIZE, 0);
+	}
+#undef MAXSIZE
+	send(connectFD, response_body, count, 0);
+}
 
 void connectionHandler(int connectFD) {
 	if(connectFD < 0) {
@@ -84,11 +99,9 @@ void connectionHandler(int connectFD) {
 			fprintf(stderr, "responding root...");
 			// send head
 			send(connectFD, response_200_head, sizeof(response_200_head), 0);
-			// get body
-			const char * response_body = root_response;
-			// send body
-			int count = strlen(response_body);
-			send(connectFD, response_body, count, 0);
+			// get/send body
+			sendstr(connectFD, root_response_head);
+			sendstr(connectFD, mod_list);
 			fprintf(stderr, "done\n");
 		} else {
 			path++;
@@ -103,26 +116,17 @@ void connectionHandler(int connectFD) {
 			if (const char * response_body = mod_serve(path, params)) {
 				// send head
 				send(connectFD, response_200_head, sizeof(response_200_head), 0);
-				// get body
 				// send body
-				int count = strlen(response_body);
-#define MAXSIZE 8192
-				while (count > MAXSIZE) {
-					send(connectFD, response_body, MAXSIZE, 0);
-				}
-#undef MAXSIZE
-				send(connectFD, response_body, count, 0);
+				sendstr(connectFD, response_body);
 				fprintf(stderr, "done\n");
 			} else {
 				fprintf(stderr, "%s not found\n", path);
 				fprintf(stderr, "responding...");
 				// send head
 				send(connectFD, response_404_head, sizeof(response_404_head), 0);
-				//// get body
-				//const char * response_body = root_response;
-				//// send body
-				//int count = strlen(response_body);
-				//send(connectFD, response_body, count, 0);
+				// get/send body
+				sendstr(connectFD, _404_response_head);
+				sendstr(connectFD, mod_list);
 				fprintf(stderr, "done\n");
 			}
 		}

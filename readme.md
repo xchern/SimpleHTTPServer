@@ -25,6 +25,6 @@ Workflow
 - [X] HTTP Receiver/Sender
 - [X] load Module
 - [X] Manipulate Program
-- [ ] Modules info
+- [X] Modules info
 - [ ] Thread Pool and Arranger
 - [ ] More Modules
