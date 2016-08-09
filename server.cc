@@ -67,10 +67,10 @@ void connectionHandler(int connectFD) {
 		failExit(0);
 	}
 
-	fprintf(stderr, "NEW connection\n");
+	fprintf(stderr, "\n[NEW connection]");
 
 	// read request head and get path
-	fprintf(stderr, "receiving...");
+	fprintf(stderr, " receiving...");
 	char recvbuff[128];
 	recvbuff[0] = '\0';// prevent empty input
 	char * path = recvbuff;
@@ -92,18 +92,18 @@ void connectionHandler(int connectFD) {
 		if (count == 0)
 			break;
 	}
-	fprintf(stderr, "done\n");
+	fprintf(stderr, " done.");
 
 	// send response
 	if (strcmp(path, "")) { // if path legal
 		if (!strcmp(path, "/")) {
-			fprintf(stderr, "responding root...");
+			fprintf(stderr, " responding root...");
 			// send head
-			send(connectFD, response_200_head, sizeof(response_200_head), 0);
+			send(connectFD, response_200_head, sizeof(response_200_head) - 1, 0);
 			// get/send body
 			sendstr(connectFD, root_response_head);
 			sendstr(connectFD, mod_list);
-			fprintf(stderr, "done\n");
+			fprintf(stderr, " done.");
 		} else {
 			path++;
 			int i = 0;
@@ -113,35 +113,35 @@ void connectionHandler(int connectFD) {
 			}
 			path[i] = '\0';
 			const char * params = path + i;
-			fprintf(stderr, "try serving with %s...", path);
+			fprintf(stderr, " try serving with %s...", path);
 			if (const char * response_body = mod_serve(path, params)) {
 				// send head
-				send(connectFD, response_200_head, sizeof(response_200_head), 0);
+				send(connectFD, response_200_head, sizeof(response_200_head) - 1, 0);
 				// send body
 				sendstr(connectFD, response_body);
-				fprintf(stderr, "done\n");
+				fprintf(stderr, " done.");
 			} else {
-				fprintf(stderr, "%s not found\n", path);
-				fprintf(stderr, "responding...");
+				fprintf(stderr, "\n[error] %s not found", path);
+				fprintf(stderr, " responding...");
 				// send head
-				send(connectFD, response_404_head, sizeof(response_404_head), 0);
+				send(connectFD, response_404_head, sizeof(response_404_head) - 1, 0);
 				// get/send body
 				sendstr(connectFD, _404_response_head);
 				sendstr(connectFD, mod_list);
-				fprintf(stderr, "done\n");
+				fprintf(stderr, "done.");
 			}
 		}
 	} else { // if path illegal
-		fprintf(stderr, "bad request\n");
-		fprintf(stderr, "responeding...");
-		send(connectFD, response_400, sizeof(response_400), 0);
-		fprintf(stderr, "done\n");
+		fprintf(stderr, "\n[error] bad request");
+		fprintf(stderr, " responeding...");
+		send(connectFD, response_400, sizeof(response_400) - 1, 0);
+		fprintf(stderr, " done.");
 	}
 
 	// close connection
 	shutdown(connectFD, SHUT_RDWR);
 	close(connectFD);
-	fprintf(stderr, "finished.\n\n");
+	fprintf(stderr, "finished.\n");
 }
 
 void * connectionAccepter(void *) {
