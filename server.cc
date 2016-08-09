@@ -108,13 +108,11 @@ void connectionHandler(int connectFD) {
 		} else {
 			path++; // skip '/'
 			// check query
-			int i = 0;
-			while(path[i] != '\0') {
-				if(path[i] == '?') break;
-				i++;
+			const char * params;
+			for (int i = 0;; i++) {
+				if(path[i] == '\0') { params = path + i; break;}
+				if(path[i] == '?') { path[i] = '\0'; params = path + i + 1; break; }
 			}
-			path[i] = '\0';
-			const char * params = path + i;
 			fprintf(stderr, " try serving with %s...", path);
 			if (const char * response_body = mod_serve(path, params)) {
 				// send head
