@@ -30,10 +30,12 @@ Content-Type: text/html; charset=utf-8\r\n\
 \r\n\
 ";
 
-static const char response_404_head[] = "\
+static const char _404_response_head[] = "\
 HTTP/1.1 404 Not Found\r\n\
-Content-Type: text/html; charset=utf-8\r\n\
+Content-Type: text/plain; charset=utf-8\r\n\
 \r\n\
+404 not found!\n\
+Try following avaliable modules:\n\
 ";
 
 static const char response_400[] = "\
@@ -43,12 +45,13 @@ Content-Type: text/html; charset=utf-8\r\n\
 Bad Request.\n\
 ";
 
-static const char root_response_head[] = "This server works!!!\n\
-Following modules avaliable:\n\
-";
-
-static const char _404_response_head[] = "404 not found!\n\
-Try following avaliable modules:\n\
+static const char root_response_head[] = "\
+HTTP/1.1 200 OK\r\n\
+Content-Type: text/plain; charset=utf-8\r\n\
+\r\n\
+Welcome!\n\
+This server WORKS!!!\n\
+Following modules are working:\n\
 ";
 
 void sendstr(int connectFD, const char * response_body) {
@@ -71,7 +74,7 @@ void connectionHandler(int connectFD) {
 
 	// read request head and get path
 	fprintf(stderr, " receiving...");
-	char recvbuff[128];
+	char recvbuff[256];
 	recvbuff[0] = '\0';// prevent empty input
 	char * path = recvbuff;
 	for (;;) {// receiving
@@ -98,14 +101,13 @@ void connectionHandler(int connectFD) {
 	if (strcmp(path, "")) { // if path legal
 		if (!strcmp(path, "/")) {
 			fprintf(stderr, " responding root...");
-			// send head
-			send(connectFD, response_200_head, sizeof(response_200_head) - 1, 0);
-			// get/send body
+			// send response
 			sendstr(connectFD, root_response_head);
 			sendstr(connectFD, mod_list);
 			fprintf(stderr, " done.");
 		} else {
-			path++;
+			path++; // skip '/'
+			// check query
 			int i = 0;
 			while(path[i] != '\0') {
 				if(path[i] == '?') break;
@@ -124,9 +126,8 @@ void connectionHandler(int connectFD) {
 				fprintf(stderr, "\n[error] %s not found", path);
 				fprintf(stderr, " responding...");
 				// send head
-				send(connectFD, response_404_head, sizeof(response_404_head) - 1, 0);
+				send(connectFD, _404_response_head, sizeof(_404_response_head) - 1, 0);
 				// get/send body
-				sendstr(connectFD, _404_response_head);
 				sendstr(connectFD, mod_list);
 				fprintf(stderr, "done.");
 			}
