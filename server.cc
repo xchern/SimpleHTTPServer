@@ -12,6 +12,7 @@
 
 #include "module.h"
 #include "console.h"
+#include "taskqueue.h"
 
 int socketFD;
 
@@ -144,9 +145,10 @@ void connectionHandler(int connectFD) {
 }
 
 void * connectionAccepter(void *) {
-	for(;;) {
+	TaskQueue<int> conqueue(connectionHandler);
+	for (;;) {
 		int connectFD = accept(socketFD, NULL, NULL);
-		connectionHandler(connectFD);
+		conqueue.addTask(connectFD);
 	}
 	return NULL;
 }
@@ -155,7 +157,7 @@ int main(int argc, char ** argv) {
 	int http_port = 8080;
 	argv++; argc--;
 	while (argc > 0) {
-		if (strcmp(argv[0], "-p")) {
+		if (!strcmp(argv[0], "--port")) {
 			argv++; argc--;
 			int port = atoi(argv[0]);
 			if (port > 0)

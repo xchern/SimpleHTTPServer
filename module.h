@@ -1,3 +1,5 @@
+#pragma once
+
 extern char mod_list[];
 
 extern bool mod_existP(const char * name);

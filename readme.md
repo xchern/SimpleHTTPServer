@@ -26,5 +26,5 @@ Workflow
 - [X] load Module
 - [X] Manipulate Program
 - [X] Modules info
-- [ ] Thread Pool and Arranger
+- [X] Thread Pool and Arranger
 - [ ] More Modules
