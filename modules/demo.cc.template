@@ -1,0 +1,34 @@
+// CAUTION
+// =======
+// 1. You should handle thread securty at yourself.
+// 2. Use utf-8 to encode you contents.
+// 3. target buffer size 64k bytes, notice to prevent overflow.
+
+#include <string.h>
+
+// module name here, will be involked when loaded
+extern "C" const char * getName(void) { return "demo";}
+
+// load work should be done here
+extern "C" void load(void);
+// unload work should be done here
+extern "C" void unload(void);
+// serve here return web page here
+extern "C" void serve(const char * param, char * target);
+
+// ===============================SPLIT=========================================
+
+// what you want to do when being loaded
+void load() {
+	return;
+}
+
+// what you want to do when being unloaded
+void unload() {
+	return;
+}
+
+// serve function which takes user's parameter after '?'
+void serve(const char * param, char * target) {
+	strcpy(target, "Hello World!\n");
+}

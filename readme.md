@@ -1,10 +1,10 @@
 Course Requirements
 ===
 - HTTP Server offering system information including:
-	- date: local time
-	- uname: linux uname
-	- df: free disk space
-	- ps: processes running
+	- time
+	- linux version
+	- free disk space
+	- processes running
 - realtime webpage when requested
 - modules compiled as dynamic shared library, and allows load dump at runtime
 - process/thread pool to handle http request
@@ -28,3 +28,7 @@ Workflow
 - [X] Modules info
 - [X] Thread Pool and Arranger
 - [ ] More Modules
+	- [ ] time
+	- [ ] version
+	- [ ] df
+	- [ ] ps

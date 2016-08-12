@@ -13,7 +13,7 @@ struct ModItem {
 	void * dlp;
 	void (*load)(void);
 	void (*unload)(void);
-	const char * (*serve)(const char *);
+	void (*serve)(const char *, char *);
 };
 
 pthread_rwlock_t list_rw_lock = PTHREAD_RWLOCK_INITIALIZER;
@@ -51,12 +51,14 @@ void mod_candidates(const char * path){
 	}
 }
 
-const char * mod_serve(const char * name, const char * param) {
+bool mod_serve(const char * name, const char * param, char * target) {
 	std::string modname(name);
-	const char * result = NULL;
+	bool result = false;
 	int rl = pthread_rwlock_rdlock(&list_rw_lock);
-	if (modules.count(modname) > 0)
-		result = (modules[modname].serve(param));
+	if (modules.count(modname) > 0) {
+		modules[modname].serve(param, target);
+		result = true;
+	}
 	pthread_rwlock_unlock(&list_rw_lock);
 	return result;
 }
@@ -123,7 +125,7 @@ void mod_doLoad(const char * path) {
 		if (!newmod.load) goto bad_mod;
 		newmod.unload = (void (*)()) dlsym(newmod.dlp, "unload");
 		if (!newmod.unload) goto bad_mod;
-		newmod.serve = (const char * (*)(const char *)) dlsym(newmod.dlp, "serve");
+		newmod.serve = (void (*)(const char *, char *)) dlsym(newmod.dlp, "serve");
 		if (!newmod.serve) goto bad_mod;
 
 		// load module

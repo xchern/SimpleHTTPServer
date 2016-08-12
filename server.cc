@@ -114,7 +114,8 @@ void connectionHandler(int connectFD) {
 				if(path[i] == '?') { path[i] = '\0'; params = path + i + 1; break; }
 			}
 			fprintf(stderr, " try serving with %s...", path);
-			if (const char * response_body = mod_serve(path, params)) {
+			char response_body[65536];
+			if (mod_serve(path, params, response_body)) {
 				// send head
 				send(connectFD, response_200_head, sizeof(response_200_head) - 1, 0);
 				// send body

@@ -3,7 +3,7 @@
 extern char mod_list[];
 
 extern bool mod_existP(const char * name);
-extern const char * mod_serve(const char * name, const char * param);
+extern bool mod_serve(const char * name, const char * param, char * target);
 extern void mod_doUnload(const char * name);
 extern void mod_doLoad(const char * path);
 
