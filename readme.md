@@ -27,8 +27,20 @@ Workflow
 - [X] Manipulate Program
 - [X] Modules info
 - [X] Thread Pool and Arranger
-- [ ] More Modules
-	- [ ] time
-	- [ ] version
-	- [ ] df
-	- [ ] ps
+- [X] More Modules
+
+	- [X] time
+
+	![time](./modules/time.png)
+
+	- [X] version
+
+	![version](./modules/version.png)
+
+	- [X] df
+
+	![df](./modules/df.png)
+
+	- [X] ps
+
+	![ps](./modules/ps.png)
