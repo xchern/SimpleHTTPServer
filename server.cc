@@ -58,27 +58,32 @@ void sendstr(int connectFD, const char * response_body) {
 	int count = strlen(response_body);
 #define MAXSIZE 8192
 	while (count > MAXSIZE) {
-		send(connectFD, response_body, MAXSIZE, 0);
+		if (send(connectFD, response_body, MAXSIZE, 0) == -1) {
+			perror("send response");
+			printf("fail send response");
+			break;
+		}
 	}
 #undef MAXSIZE
 	send(connectFD, response_body, count, 0);
 }
 
 void connectionHandler(int connectFD) {
+	printf("\n[connection]");
+
 	if(connectFD < 0) {
-		perror("error accept failed");
+		perror("accept connection");
+		printf("fail accept connection");
 		failExit(0);
 	}
 
-	fprintf(stderr, "\n[NEW connection]");
-
 	// read request head and get path
-	fprintf(stderr, " receiving...");
-	char recvbuff[256];
+	printf(" receiving...");
+	char recvbuff[1024];
 	recvbuff[0] = '\0';// prevent empty input
 	char * path = recvbuff;
 	for (;;) {// receiving
-		int count = recv(connectFD, recvbuff, sizeof(recvbuff) - 1, 0);
+		int count = recv(connectFD, recvbuff, sizeof(recvbuff), 0);
 		if (count > 0) {
 			if (recvbuff[0] != 'G') { path[0] = '\0'; break; }
 			if (recvbuff[1] != 'E') { path[0] = '\0'; break; }
@@ -87,7 +92,7 @@ void connectionHandler(int connectFD) {
 			int i = 0;
 			if (path[0] != '/') { path[0] = '\0'; break; }
 			while(path[i] != ' ')
-				if(i < sizeof(recvbuff)) i++;
+				if(i < sizeof(recvbuff) - 4) i++;
 				else { i = 0; break; }// prevent overflow
 			path[i] = '\0';
 			break;
@@ -95,16 +100,16 @@ void connectionHandler(int connectFD) {
 		if (count == 0)
 			break;
 	}
-	fprintf(stderr, " done.");
+	printf(" done.");
 
 	// send response
 	if (strcmp(path, "")) { // if path legal
 		if (!strcmp(path, "/")) {
-			fprintf(stderr, " responding root...");
+			printf(" responding root...");
 			// send response
 			sendstr(connectFD, root_response_head);
 			sendstr(connectFD, mod_list);
-			fprintf(stderr, " done.");
+			printf(" done.");
 		} else {
 			path++; // skip '/'
 			// check query
@@ -113,35 +118,36 @@ void connectionHandler(int connectFD) {
 				if(path[i] == '\0') { params = path + i; break;}
 				if(path[i] == '?') { path[i] = '\0'; params = path + i + 1; break; }
 			}
-			fprintf(stderr, " try serving with %s...", path);
+			printf(" try serving with %s...", path);
 			char response_body[65536];
 			if (mod_serve(path, params, response_body)) {
 				// send head
 				send(connectFD, response_200_head, sizeof(response_200_head) - 1, 0);
 				// send body
 				sendstr(connectFD, response_body);
-				fprintf(stderr, " done.");
+				printf(" done.");
 			} else {
-				fprintf(stderr, "\n[error] %s not found", path);
-				fprintf(stderr, " responding...");
+				printf("\n[error] %s not found", path);
+				printf(" responding...");
 				// send head
 				send(connectFD, _404_response_head, sizeof(_404_response_head) - 1, 0);
 				// get/send body
 				sendstr(connectFD, mod_list);
-				fprintf(stderr, "done.");
+				printf("done.");
 			}
 		}
 	} else { // if path illegal
-		fprintf(stderr, "\n[error] bad request");
-		fprintf(stderr, " responeding...");
+		printf("\n[error] bad request");
+		printf(" responeding...");
 		send(connectFD, response_400, sizeof(response_400) - 1, 0);
-		fprintf(stderr, " done.");
+		printf(" done.");
 	}
 
 	// close connection
 	shutdown(connectFD, SHUT_RDWR);
 	close(connectFD);
-	fprintf(stderr, "finished.\n");
+	printf("finished.\n");
+	fflush(stdout);
 }
 
 void * connectionAccepter(void *) {
@@ -178,6 +184,7 @@ int main(int argc, char ** argv) {
 		perror("handle signal");
 		failExit(0);
 	}
+	signal(SIGPIPE, SIG_IGN);
 	fprintf(stderr, "Signal Interupt Handled\n");
 
 	// bind socket on port 8080
@@ -204,6 +211,6 @@ int main(int argc, char ** argv) {
 
 	console();
 
-	close(socketFD);
+	while (close(socketFD) == -1);
 	return 0;
 }

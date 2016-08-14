@@ -29,17 +29,17 @@ void console(void) {
 		if (bytes < sizeof(mod_prefix))
 			bytes = sizeof(mod_prefix) - 1;
 		if (bytes < 0)
-			puts("unable to get current work directory");
+			fprintf(stderr, "unable to get current work directory\n");
 		while (mod_prefix[--bytes] != '/');
 		bytes++;
 		strcpy(mod_prefix + bytes, "modules/");
 		strcpy(mod_path, mod_prefix);
 		mod_name = mod_path + strlen(mod_path);
 	}
-	printf("module probing directory: %s\n", mod_prefix);
+	fprintf(stderr, "module probing directory: %s\n", mod_prefix);
 	for (;;) {
 		// prompt
-		printf("\n>>> ");
+		fprintf(stderr, "\n>>> ");
 		// read
 		int i = 0;
 		char c; 
@@ -51,7 +51,7 @@ void console(void) {
 		buff[i] = '\0';
 		// parse & do
 		if (!strcmp(buff, "quit")) { break; }
-		if (!strcmp(buff, "help")) { puts(help_items); continue; }
+		if (!strcmp(buff, "help")) { fprintf(stderr, help_items); continue; }
 		if (!strcmp(buff, "status")) { mod_status(); continue; }
 		if (!strcmp(buff, "cand")) { mod_candidates(mod_prefix); continue; }
 
@@ -66,7 +66,7 @@ void console(void) {
 		if (!strcmp(buff, "load")) { strcpy(mod_name, name); mod_doLoad(mod_path); continue; }
 		if (!strcmp(buff, "unload")) { mod_doUnload(name); continue; }
 		// else bad command
-		puts("Bad Command!");
+		fprintf(stderr, "Bad Command!\n");
 	}
 	return;
 }

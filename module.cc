@@ -31,23 +31,23 @@ void mod_list_update(void) {
 }
 
 void mod_status(void){
-	puts("All running modules:");
-	puts(mod_list);
+	fprintf(stderr, "All running modules:\n");
+	fprintf(stderr, mod_list);
 }
 
 void mod_candidates(const char * path){
 	DIR * dir;
 	struct dirent *ent;
 	if ((dir = opendir(path)) != NULL) {
-		puts("module candidates:");
+		fprintf(stderr, "module candidates:\n");
 		while ((ent = readdir(dir)) != NULL) {
 			if (ent->d_name[0] != '.')
-				printf("%s\t", ent->d_name);
+				fprintf(stderr, "\t%s", ent->d_name);
 		}
-		putchar('\n');
+		fprintf(stderr, "\n");
 		closedir(dir);
 	} else {
-		puts("fail open module directory!");
+		fprintf(stderr, "fail open module directory!\n");
 	}
 }
 
@@ -64,59 +64,57 @@ bool mod_serve(const char * name, const char * param, char * target) {
 }
 
 void mod_doUnload(const char * name) {
-	puts("[unload]");
-	printf("try to unload module \'%s\'\n", name);
+	fprintf(stderr, "try to unload module \'%s\'\n", name);
 	std::string modname(name);
 	// check if module exists
 	if (!modules.count(modname) > 0) {
-		printf("no module named \'%s\'\n", name);
+		fprintf(stderr, "no module named \'%s\'\n", name);
 		return;
 	}
 
 	// unregister module
-	printf("unregistering module...");
+	fprintf(stderr, "unregistering module...");
 	struct ModItem mod = modules[modname];
 	modules.erase(modname);
 	mod_list_update();
-	puts("done.");
+	fprintf(stderr, "done.\n");
 
 	// unload module
-	printf("unloading module...");
+	fprintf(stderr, "unloading module...");
 	mod.unload();
-	puts("done.");
+	fprintf(stderr, "done.\n");
 
 	// close shared library
-	printf("closing shared library...");
+	fprintf(stderr, "closing shared library...");
 	if (dlclose(mod.dlp)) {
-		puts("fail");
+		fprintf(stderr, "fail\n");
 		char * errormsg = dlerror();
 		if (errormsg)
-			puts(errormsg);
+			fprintf(stderr, errormsg);
 	} else {
-		puts("done.");
-		puts("SUCCESS!");
+		fprintf(stderr, "done.\n");
+		fprintf(stderr, "SUCCESS!\n");
 	}
 }
 
 void mod_doLoad(const char * path) {
-	puts("[load]");
 	struct ModItem newmod;
 	std::string modname;
 	char * errormsg;
-	printf("try to open library from file %s...", path);
+	fprintf(stderr, "try to open library from file %s...", path);
 	// try load shared lib
 	newmod.dlp = dlopen(path, RTLD_LAZY);
 	if (newmod.dlp) {
-		puts("done.");
+		fprintf(stderr, "done.\n");
 		// try get module information
-		puts("try to getmodule information.");
+		fprintf(stderr, "try to getmodule information.\n");
 		const char * (* getName)(void) = (const char * (*)()) dlsym(newmod.dlp, "getName");
 		if (!getName) goto bad_mod;
 		modname = getName();
-		printf("module name: %s\n", modname.c_str());
+		fprintf(stderr, "module name: %s\n", modname.c_str());
 
 		if (modules.count(modname) > 0) { // abort if name exists
-			puts("module with same name having been loaded");
+			fprintf(stderr, "module with same name having been loaded\n");
 			goto close_lib;
 		}
 
@@ -129,34 +127,34 @@ void mod_doLoad(const char * path) {
 		if (!newmod.serve) goto bad_mod;
 
 		// load module
-		printf("loading module...");
+		fprintf(stderr, "loading module...");
 		newmod.load();
-		puts("done.");
+		fprintf(stderr, "done.\n");
 
 		// register module
-		printf("registering module...");
+		fprintf(stderr, "registering module...");
 		modules[modname] = newmod;
 		mod_list_update();
-		puts("done.");
+		fprintf(stderr, "done.\n");
 
-		puts("SUCCESS!");
+		fprintf(stderr, "SUCCESS!\n");
 		return;
 bad_mod:
-		puts("BAD module.");
+		fprintf(stderr, "BAD module.\n");
 		errormsg = dlerror();
 		if (errormsg)
-			puts(errormsg);
+			fprintf(stderr, errormsg);
 close_lib:
 		if (dlclose(newmod.dlp)) {
-			puts("fail closing shared library.");
+			fprintf(stderr, "fail closing shared library.\n");
 			errormsg = dlerror();
 			if (errormsg)
-				puts(errormsg);
+				fprintf(stderr, errormsg);
 		}
 	} else {
-		puts("fail.");
+		fprintf(stderr, "fail.\n");
 		errormsg = dlerror();
 		if (errormsg)
-			puts(errormsg);
+			fprintf(stderr, errormsg);
 	}
 }
