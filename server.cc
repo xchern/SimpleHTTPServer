@@ -179,12 +179,14 @@ int main(int argc, char ** argv) {
 	}
 	fprintf(stderr, "Socket Created\n");
 
+	struct sigaction sa;
+	sa.sa_handler = SIG_IGN;
+	sigaction( SIGPIPE, &sa, 0 );
 	// handle SIGINT
 	if(signal(SIGINT, failExit) == SIG_ERR) {
 		perror("handle signal");
 		failExit(0);
 	}
-	signal(SIGPIPE, SIG_IGN);
 	fprintf(stderr, "Signal Interupt Handled\n");
 
 	// bind socket on port 8080
