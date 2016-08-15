@@ -13,16 +13,29 @@ void unload(void) { }
 void serve(const char * param, char * target) {
 	char strversion[2048];
 	FILE *p;
+	int count;
 	strcpy(target, "<html><head><title>version</title></head><body><pre>\n");
+
+	p = popen("uname -a", "r");
+	if(!p) {
+		fprintf(stderr, "Error opening pipe.\n");
+	}
+	count = fread(strversion, sizeof(char), sizeof(strversion)/sizeof(char), p);
+	if (pclose(p) == -1) {
+		fprintf(stderr," Error closing pipe!\n");
+	}
+	strversion[count] = '\0';
+	strcat(target, strversion);
+
 	p = popen("cat /etc/*release", "r");
 	if(!p) {
 		fprintf(stderr, "Error opening pipe.\n");
 	}
-	int count = fread(strversion, sizeof(char), sizeof(strversion)/sizeof(char), p);
-	strversion[count] = '\0';
+	count = fread(strversion, sizeof(char), sizeof(strversion)/sizeof(char), p);
 	if (pclose(p) == -1) {
 		fprintf(stderr," Error closing pipe!\n");
 	}
+	strversion[count] = '\0';
 	strcat(target, strversion);
 	strcat(target, "</pre></body></html>");
 }
